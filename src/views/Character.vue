@@ -1,86 +1,79 @@
 <template>
   <div class="card-container">
-    <div class="card" v-for="character in characters" :key="character.id">
+    <div class="card" v-for="character in characters.results" :key="character.id">
       <div>
         <div class="container">
           <h4><b>Nombre</b></h4>
-          <p>{{character.name}}</p>
+          <p>{{ character.name }}</p>
           <h4><b>Status</b></h4>
-          <p>{{character.status}}</p>
+          <p>{{ character.status }}</p>
           <h4><b>Imagen</b></h4>
           <img :src="character.image" alt="Avatar" style="width:100%">
         </div>
       </div>
-      </div>
+    </div>
   </div>
-
 </template>
 
 <script>
 import axios from 'axios';
+
 export default {
   name: "Character",
-  components: {
-
-  },
-  data(){
-    return{
-      characters: null,
-      paginations: null,
-      currentPage: 1,
-      totalPages: null
+  data() {
+    return {
+      characters: []
     }
+  },
+  async created() {
+    const firstLoadedData = await axios.get("https://rickandmortyapi.com/api/character");
+    this.characters = firstLoadedData.data;
+  },
+  mounted() {
+    this.infiniteScroll();
   },
   methods: {
-    getData(){
-      axios
-          .get("https://rickandmortyapi.com/api/character/?page=2")
-      .then(response=>{
-        this.characters = response.data.results;
-        this.paginations = response.data.info;
-        this.totalPages = response.data.info.pages;
-      })
-      .catch(e=>{
-        console.log(e)
-      })
-    },
-    pageChangeHandler(selectedPage) {
-      this.currentPage = selectedPage
-    }
+    infiniteScroll() {
+      window.onscroll = () => {
+        let bottomOfWindow =
+            document.documentElement.scrollTop + window.innerHeight ===
+            document.documentElement.offsetHeight;
 
-  },
-  mounted(){
-    this.getData();
+        if (bottomOfWindow) {
+          axios
+              .get(this.characters.info.next)
+              .then((response) => {
+                this.characters.results.push(...response.data.results);
+                this.characters.info = response.data.info;
+              })
+              .catch((error) => console.error(error));
+        }
+      };
     }
+  }
 }
 </script>
 
 <style scoped>
 
 .card {
-  /* Add shadows to create the "card" effect */
-  box-shadow: 0 4px 8px 0 rgba(0,0,0,0.2);
+  box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
   transition: 0.3s;
 }
 
-/* On mouse-over, add a deeper shadow */
 .card:hover {
-  box-shadow: 0 8px 16px 0 rgba(0,0,0,0.2);
+  box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
 }
 
-/* Add some padding inside the card container */
 .container {
   padding: 2px 16px;
 
 }
 
-.card-container{
-
+.card-container {
   display: flex;
   justify-content: space-between;
-  flex-wrap: wrap;  /* cards 4 columnas */
+  flex-wrap: wrap; /* cards 4 columnas */
 
 }
-
-
 </style>
